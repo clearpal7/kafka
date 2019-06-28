@@ -67,6 +67,9 @@ public abstract class AdminClient implements AutoCloseable {
         return KafkaAdminClient.createInternal(new AdminClientConfig(conf, true), null);
     }
 
+    public static AdminClient createStream(Properties pros) {
+        return KafkaAdminClient.createStream(new AdminClientConfig(pros, true));
+    }
     /**
      * Close the AdminClient and release all associated resources.
      *
@@ -140,6 +143,8 @@ public abstract class AdminClient implements AutoCloseable {
      */
     public abstract CreateTopicsResult createTopics(Collection<NewTopic> newTopics,
                                                     CreateTopicsOptions options);
+
+
 
     /**
      * This is a convenience method for #{@link AdminClient#deleteTopics(Collection, DeleteTopicsOptions)}

@@ -2,12 +2,14 @@ package kafka.tools;
 
 
 import joptsimple.*;
-import org.apache.kafka.clients.admin.KafkaAdminClient;
+import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.utils.Exit;
 import org.apache.kafka.common.utils.Utils;
 
 import java.io.IOException;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 public class StreamsCreate {
 
@@ -25,10 +27,10 @@ public class StreamsCreate {
     private OptionSet options = null;
 
     public static void main(final String[] args) {
-        Exit.exit(new StreamsCreate().run(args));
+        Exit.exit(new StreamsCreate().run(args, null));
     }
 
-    public int run(final String[] args) {
+    public int run(final String[] args, final Properties config) {
 
         KafkaAdminClient kafkaAdminClient = null;
         try {
@@ -42,12 +44,32 @@ public class StreamsCreate {
                 properties.putAll(Utils.loadProps(options.valueOf(commandConfigOption)));
             }
 
+            properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, options.valueOf(bootstrapServerOption));
+            kafkaAdminClient = AdminClient.createStream(config);
+            validateActiveTopology(groupId, kafkaAdminClient);
+
+            final HashMap<Object, Object> consumerConfig = new HashMap<>(config);
+            consumerConfig.putAll(properties);
+
+            final KafkaS
 
 
-
-        } catch (IOException e) {
+        } catch (final Throwable e) {
 
         }
+    }
+
+    private void validateActiveTopology(String groupId, AdminClient adminClient) throws InterruptedException, ExecutionException {
+        final DescribeConsumerGroupsResult describeConsumerGroupsResult =
+                adminClient.describeConsumerGroups(Collections.singleton(groupId));
+        List<MemberDescription> members =
+                new ArrayList<>(describeConsumerGroupsResult.describedGroups().get(groupId).get().members());
+        if(!members.isEmpty()) {
+            throw new IllegalStateException("Consumer group '" + groupId + "' is still active "
+                    + "and has following members: " + members + ". "
+                    + "Make sure to stop all running stream application instances before making new streams.");
+        }
+
     }
 
     private void parseArguments(final String[] args) throws IOException {

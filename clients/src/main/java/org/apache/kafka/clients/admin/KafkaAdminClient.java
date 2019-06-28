@@ -428,6 +428,10 @@ public class KafkaAdminClient extends AdminClient {
         }
     }
 
+    static KafkaAdminClient createStream(AdminClientConfig adminClientConfig) {
+
+    }
+
     static LogContext createLogContext(String clientId) {
         return new LogContext("[AdminClient clientId=" + clientId + "] ");
     }
